@@ -1,0 +1,10 @@
+node_modules
+package-lock.json
+.vscode  
+.history
+
+node_modules
+
+package-lock.json
+activityMonitor.log
+output.txt
