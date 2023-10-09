@@ -1,15 +1,14 @@
-import { Response, Request } from "express-serve-static-core";
-import express from "express";
-import { getUserIdFromHeaders } from "../utils";
+import express, { Response, Request } from "express";
 import { productService } from "./product.service";
 
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {    
     try {
-        const allProducts = await productService.getAllPruducts();
+        const allProducts = await productService.getAllProducts();
         if (allProducts?.length) {
             res.json({data: allProducts, error: null});
+            return;
         }
         res.status(401);
         res.send({data: null, error: 'User is not authorizes'});

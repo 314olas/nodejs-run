@@ -1,7 +1,7 @@
 import { CART_DB, ORDER_DB } from '../constants';
 import { getProduct } from '../product/product.repository';
 import { Cart, Order } from '../types';
-import { readFromFile, validateCartUpdate, writeToFile } from '../utils';
+import { calculateTotalPrice, getUpdatedCart, readFromFile, writeToFile } from '../utils';
 
 async function getUserCartsCartById(userId: number): Promise<{carts: Cart[], currentCart: Cart | null, cartIndex: number}> {
     const carts = await readFromFile<Cart[]>(CART_DB);
@@ -51,43 +51,22 @@ export const deleteCartByUserId = async (userId: number): Promise<void>  => {
 
 export const updateUserCart = async (userId: number, {productId, count}: {productId: number, count: number}): Promise<Cart | null> => {
     const {carts, currentCart, cartIndex} = await getUserCartsCartById(userId);
-    if (cartIndex !== -1 && currentCart) {
-        const cartProductIndex = currentCart.items.findIndex( item => item.product.id === productId)
-        let updatedCart;
-        
-        if (count && (cartProductIndex === -1)) {
-            const product = await getProduct(productId)
-            if (product) {
-                updatedCart = {
-                    ...currentCart,
-                    items: [...currentCart.items, {product: product, count: count}]
-                }
-            }
-            throw new Error('wrong Product Id')
-            
-        } else if (count && (cartProductIndex !== -1)) {
-            currentCart.items[cartProductIndex] = {
-                product: currentCart.items[cartProductIndex].product, 
-                count: currentCart.items[cartProductIndex].count + count
-            };
-            updatedCart = {
-                ...currentCart,
-                items: currentCart.items
-            }
-        } else {
-            updatedCart = {
-                ...currentCart,
-                items: currentCart.items.filter( cart => cart.product.id !== productId)
-            }
-        }
 
-        carts[cartIndex] = updatedCart;
-        await writeToFile(CART_DB, carts);
-
-        return updatedCart;
+    if (cartIndex === -1 || !currentCart) {
+        return null;
     }
 
-    return null
+    const product = await getProduct(productId)
+
+    if (!product) {
+        throw new Error('Invalid Product ID');
+    }
+    
+    const updatedCart = getUpdatedCart(currentCart, count, product)
+    carts[cartIndex] = updatedCart;
+    await writeToFile(CART_DB, carts);
+
+    return updatedCart;
 }
 
 
@@ -101,9 +80,7 @@ export const createOrderFromCart = async (userId: number): Promise<Order | null>
             items: currentCart.items,
             status: 'created',
             userId,
-            totalprice: currentCart.items.reduce( (totalPrice, cartItem) => {
-                return totalPrice + ( cartItem.product.price + cartItem.count)
-            }, 0)
+            totalPrice: calculateTotalPrice(currentCart)
         };
         const orders = await readFromFile<Order[]>(ORDER_DB);
         await writeToFile(ORDER_DB, [...orders, order]);

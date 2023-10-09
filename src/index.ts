@@ -1,11 +1,11 @@
 import express from 'express';
 import { cartRouter } from './cart/cart.controller';
-import { validate } from './utils';
 import { productRouter } from './product/product.controller';
+import { checkUserIdHeader } from './middlewares/auth.validator';
 
 const app = express();
 
-app.use(validate);
+app.use(checkUserIdHeader);
 
 app.use('/api/cart', cartRouter);
 

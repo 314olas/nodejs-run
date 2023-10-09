@@ -1,6 +1,6 @@
-import { CART_DB, ORDER_DB, PRODUCT_DB } from '../constants';
+import { PRODUCT_DB } from '../constants';
 import { Product } from '../types';
-import { readFromFile, writeToFile } from '../utils';
+import { readFromFile } from '../utils';
 
 export async function getAllProducts(): Promise<Product[]> {
     return await readFromFile<Product[]>(PRODUCT_DB);

@@ -2,12 +2,12 @@ import {getAllProducts, getProduct} from './product.repository'
 
 class ProductService {
 
-    async getAllPruducts() {
-        return await getAllProducts();
+    async getAllProducts() {
+        return getAllProducts();
     }
 
     async getProduct(productId: number) {
-        return await getProduct(productId)
+        return getProduct(productId)
     }
     
 }

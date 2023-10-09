@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from "express";
+import { Request } from 'express';
 import fs from 'fs/promises'
-import Joi from "joi";
+import { Cart, Product } from './types';
 
 export const getUserIdFromHeaders = (req: Request): number | null => {
     const userId = req.headers['x-user-id'];
@@ -13,28 +13,49 @@ export const getUserIdFromHeaders = (req: Request): number | null => {
 }
 
 export const readFromFile = async <T>(filePath: string): Promise<T> => {
-    return await fs.readFile(filePath).then(data => {
-        return JSON.parse(data.toString()) as T
-    });
+    const data = await fs.readFile(filePath)
+    return JSON.parse(data.toString())
 }
 
 export const writeToFile = async <T>(filePath: string, data: T): Promise<void> => {
     return await fs.writeFile(filePath, JSON.stringify(data))
 }
 
-export const validate = (req: Request, res: Response, next: NextFunction) => {
-    const userIdHeader = getUserIdFromHeaders(req);
+export const calculateTotalPrice = (cart: Cart): number => {
+    const totalPrice = cart.items.reduce( (totalPrice, cartItem) => {
+        return totalPrice + ( cartItem.product.price + cartItem.count )
+    }, 0);
 
-    if (!userIdHeader) {
-        res.status(403);
-        return res.send({data: null, error: 'You have to be authorized'});
-    } 
-
-    next();
+    return totalPrice
 }
 
-export const validateCartUpdate = () => {
-    return Joi.object({
-        productId: Joi.number(), count: Joi.number()
-    })
-} 
+
+export const getUpdatedCart = (cart: Cart, count: number, product: Product) => {
+    const cartItems = cart.items
+    const cartProductIndex = cartItems.findIndex( item => item.product.id === product.id)
+    let updatedCart;
+    
+    if (count && (cartProductIndex === -1)) {
+        updatedCart = {
+            ...cart,
+            items: [...cartItems, {product: product, count: count}]
+        }
+        
+    } else if (count && (cartProductIndex !== -1)) {
+        cartItems[cartProductIndex] = {
+            product: cartItems[cartProductIndex].product, 
+            count: cartItems[cartProductIndex].count + count
+        };
+        updatedCart = {
+            ...cart,
+            items: cartItems
+        }
+    } else {
+        updatedCart = {
+            ...cart,
+            items: cartItems.filter( cart => cart.product.id !== product.id)
+        }
+    }
+
+    return updatedCart
+}

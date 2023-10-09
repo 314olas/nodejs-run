@@ -1,7 +1,7 @@
-import express from "express";
-import { Response, Request } from "express-serve-static-core";
+import express, { Response, Request } from "express";
 import { cartService } from "./cart.service";
 import { getUserIdFromHeaders } from "../utils";
+import { checkUpdateCartReq } from "../middlewares/updateCart.valodator";
 
 const router = express.Router();
 
@@ -37,7 +37,7 @@ router.delete('/', async (req: Request, res: Response) => {
     }
 })
 
-router.put('/', async (req: Request, res: Response) => {
+router.put('/', checkUpdateCartReq, async (req: Request, res: Response) => {
     try {
         const userId = getUserIdFromHeaders(req);
 

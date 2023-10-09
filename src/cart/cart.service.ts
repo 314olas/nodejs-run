@@ -1,4 +1,3 @@
-import { validateCartUpdate } from "../utils";
 import { deleteCartByUserId, getCartByUserId, updateUserCart, createOrderFromCart } from "./cart.repository";
 
 class CartService {
@@ -10,16 +9,15 @@ class CartService {
     }
 
     async deleteUserCart(userID: number) {
-        return await deleteCartByUserId(userID);
+        return deleteCartByUserId(userID);
     }
 
     async updateUserCartItems(userID: number, data: {productId: number, count: number}) {
-        await validateCartUpdate().validateAsync(data);
-        return await updateUserCart(userID, data)
+        return updateUserCart(userID, data)
     }
 
     async createOrderFromCart(userID: number) {
-        return await createOrderFromCart(userID)
+        return createOrderFromCart(userID)
     }
     
 }
