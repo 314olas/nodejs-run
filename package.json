@@ -1,0 +1,21 @@
+{
+  "name": "nodejs-run",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000n\u0000o\u0000d\u0000e\u0000j\u0000s\u0000-\u0000r\u0000u\u0000n\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.5.1",
+    "express": "^4.18.2",
+    "joi": "^17.11.0",
+    "typescript": "^5.2.2"
+  },
+  "scripts": {
+    "start": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^4.17.18"
+  }
+}
