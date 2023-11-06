@@ -1,67 +1,92 @@
-import { DI } from '..';
-import { Cart } from '../enteties/cart.entity';
-import { CartItem } from '../enteties/cartItem.entity';
-import { Order } from '../enteties/order.entety';
+import Cart from "../enteties/cart.entity";
+import CartItem, { ICartItem } from "../enteties/cartItem.entity";
+import Order from "../enteties/order.entety";
+import Product from "../enteties/product.entity";
+import User from "../enteties/user.entity";
+import { OrderStatus } from "../types";
+
+
 
 export const getCartByUserId = async (userId: string)  => {
-    const cart = await DI.cartRepository.findOne(
-        { user: { uuid: userId } },
-        { populate: ["items"] }
-      );
+    const user = await User.findById(userId);
+    let result;
 
-    if (!cart) {
-        const user = await DI.userRepository.findOneOrFail({uuid: userId});
+    if (user && user.id) {
+        result = await Cart.findOne({user: user.id}).populate({
+            path: 'items',
+            model: 'CartItem',
+        });
 
-        if (user) {
-            const newCart = new Cart();
-            newCart.user = user;
-            await DI.cartRepository.persistAndFlush(newCart);
-            return newCart;
+        if (!result) {
+            result = await Cart.create({
+                user: user.id,
+            });
         }
-    }
 
-    return cart;
+        return result;
+    }
 }
 
 export const deleteCartByUserId = async (userId: string)  => {
-    const user = await DI.userRepository.findOneOrFail({uuid: userId});
-    const cart = await DI.cartRepository.findOneOrFail({user: user},{populate: ['items']});
-    cart.items.removeAll();
-    await DI.cartRepository.flush();
-    return cart;
+    const user = await User.findById(userId);
 
+    if (user && user.id) {
+        const cart = await Cart.findOneAndUpdate({user: user.id}, {items: []}, {new: true});
+        if (cart) {
+            await CartItem.deleteMany({cart: cart.id});
+
+        }
+        return cart;
+    }
+    
 }
 
 export const updateUserCart = async (userId: string, {productId, count}: {productId: string, count: number}) => {
-    const product = await DI.productRepository.findOne({uuid: productId});
-    const user = await DI.userRepository.findOneOrFail({uuid: userId});
-    const cart = await DI.cartRepository.findOne({user: user},{populate: ['items']});
+    const user = await User.findById(userId);
 
-    if (!cart) throw new Error('Cart was not found');
-    if (!product) throw new Error('Products are not valid');
+    if (user && user.id) {
+        const product = await Product.findById(productId).exec();
+        const cart = await Cart.findOne({user: user.id}).populate({
+            path: 'items',
+            model: 'CartItem',
+        })
+        .populate({
+            path: 'user',
+            model: 'User',
+        }).exec();
 
-    const cartItem = await DI.cartItemRepository.findOne({cart: cart, product: product});
-
-    if (cartItem) {
-        cartItem.count += count;
-        await DI.cartItemRepository.flush();
-        await DI.cartRepository.flush();
+        if (!cart) throw new Error('Cart was not found');
+        if (!product) throw new Error('Products are not valid');
+    
+        const cartItem = await CartItem.findOne({cart: cart.id, product: product.id}).exec();
+    
+        if (cartItem) {
+            cartItem.count += count;
+            await cartItem.save();
+            return cart;
+        }
+    
+        const item = await CartItem.create({
+            count,
+            product: product.id,
+            cart: cart.id,
+        });
+        cart.items.push(item);
+        await cart.save();
+    
         return cart;
     }
-
-    const newCartItem = new CartItem();
-    newCartItem.count = count;
-    newCartItem.product = product;
-    cart.items.add(newCartItem);
-    await DI.cartRepository.flush();
-
-    return cart;
 }
 
-
 export const createOrderFromCart = async (userId: string) => {
-    const user = await DI.userRepository.findOneOrFail({uuid: userId});
-    const cart = await DI.cartRepository.findOne({user: user}, {populate: ['items.product']});
+    const user = await User.findById(userId);
+    const cart = await Cart.findOne({user: user}).populate({
+        path: 'items',
+        populate: {
+            path: 'product',
+            model: 'Product',
+        },
+    });
 
     if(!cart) {
         throw new Error('Not Found');
@@ -71,17 +96,29 @@ export const createOrderFromCart = async (userId: string) => {
         throw new Error('Cart is empty');
     }
 
-    const payment = await DI.paymentRepository.findOneOrFail({type: 'paypal'})
-    const delivery = await DI.deliveryRepository.findOneOrFail({type: 'Nova Post'})
+    const order = new Order;
+    if (user && user.id) { 
+        order.user = user.id;
+        order.cart = cart.id;
 
-    const order = new Order();
-    order.user = user;
-    order.cart = cart;
-    order.items = cart.items.toJSON();
-    order.payment = payment;
-    order.delivery = delivery;
+        // @ts-ignore
+        order.items = JSON.stringify(cart.items);
+        order.payment = {
+            type: 'paypal',
+            address: 'Shevchenko 25',
+            creditCard: '1254 2555 4856 1235',
+        };
+        order.delivery = {
+            type: 'NovaPost',
+            address: 'Shevchenko 25',
+        };
+        order.comments = 'Handle with care';
+        order.status = OrderStatus.CREATED;
+        order.total = cart.items.reduce((acc: number, item: ICartItem) => (item.count * item.product.price) + acc, 0);
 
-    await DI.orderRepository.persistAndFlush(order);
-    return order;
+        await order.save();
+
+        return order;
+    }
 
 }

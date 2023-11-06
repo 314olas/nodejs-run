@@ -1,14 +1,10 @@
-import { DI } from '..';
-import { PRODUCT_DB } from '../constants';
-import { Product } from '../types';
-import { readFromFile } from '../utils';
+import Product from "../enteties/product.entity";
+
 
 export async function getAllProducts() {
-    return await DI.productRepository.findAll({
-        limit: 20,
-    });
+    return Product.find();
 }
 
 export const getProduct = async (productId: string)  => {
-    return await DI.productRepository.findOneOrFail(productId);
+    return await Product.findById(productId)
 }

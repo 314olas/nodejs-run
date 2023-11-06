@@ -1,21 +1,42 @@
-import {Collection, Entity, OneToOne, OneToMany, PrimaryKey, Property } from "@mikro-orm/core";
-import {SoftDeletable} from "mikro-orm-soft-delete";
-import {User} from "./user.entity";
-import {CartItem} from "./cartItem.entity";
+import {Document, Model, model, Schema} from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
+import User, {IUser} from "./user.entity";
+import CartItem, {ICartItem} from "./cartItem.entity";
 
-@SoftDeletable(() => Cart, 'isDeleted', () => true)
-@Entity()
-export class Cart {
 
-    @PrimaryKey({type: "uuid", defaultRaw: 'uuid_generate_v4()'})
-    uuid!: string;
+export type TCart = {
+    user: IUser['id']
+    isDeleted: boolean
+    items: ICartItem['id'][]
+};
 
-    @Property({default: false})
-    isDeleted!: boolean;
+export interface ICart extends TCart, Document {}
 
-    @OneToOne(() => User,user => user.cart, { owner: true } )
-    user!: User;
-
-    @OneToMany(() => CartItem, cartItem => cartItem.cart, {nullable: true, default: [], orphanRemoval: true})
-    items = new Collection<CartItem>(this);
+interface ICartModel extends Model<ICart>{
+    findOrCreate: (uuid: string) => Promise<ICart>;
 }
+
+const cartSchema: Schema = new Schema({
+    _id: {
+        type: Schema.Types.String,
+        default: uuidv4,
+        alias: 'id',
+    },
+    user: {
+        type: Schema.Types.String,
+        ref: 'User',
+        required: true,
+    },
+    isDeleted: {
+        type: Schema.Types.Boolean,
+        default: false,
+    },
+    items: [{
+        ref: 'CartItem',
+        type: Schema.Types.String,
+    }],
+});
+
+const Cart = model<ICart, ICartModel>("Cart", cartSchema);
+
+export default Cart;

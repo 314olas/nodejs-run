@@ -1,13 +1,25 @@
-import { Entity, OneToOne, PrimaryKey } from "@mikro-orm/core";
-import {Cart} from "./cart.entity";
+import { Document, model, Schema } from "mongoose";
+import { v4 as uuidv4, stringify as uuidStringify } from 'uuid';
 
-@Entity()
+export type TUser = {
+    username: string
+};
 
-export class User {
-    @PrimaryKey({type: "uuid", defaultRaw: 'uuid_generate_v4()'})
-    uuid!: string;
+export interface IUser extends TUser, Document {}
 
-    @OneToOne(() => Cart,cart => cart.user, { owner: false })
-    cart?: Cart;
+const userSchema: Schema = new Schema({
+    _id: {
+        type: Schema.Types.String,
+        default: uuidv4,
+        alias: 'id',
+    },
+    username: {
+        type: Schema.Types.String,
+        required: true,
+        unique: true,
+    }
+});
 
-}
+const User = model<IUser>("User", userSchema);
+
+export default User;

@@ -1,32 +1,22 @@
-import type { EntityManager } from '@mikro-orm/core';
-import { Seeder } from '@mikro-orm/seeder';
-import { User } from '../enteties/user.entity';
-import { Product } from '../enteties/product.entity';
-import { Cart } from '../enteties/cart.entity';
-import { Delivery } from '../enteties/delivery.entity';
-import { Payment } from '../enteties/payment.entity';
+import Product from "../enteties/product.entity";
+import User from "../enteties/user.entity";
+import connectDB from "../mongo.config";
 
-export class DatabaseSeeder extends Seeder {
+export const init = (async () => {
+    await connectDB();
 
-  async run(em: EntityManager): Promise<void> {
-    const user = em.create(User, {});
-    const product = em.create(Product, {
-      title: 'Product 1',
-      description: 'Product 1 description',
-      price: 19,
-    });
-    const cart = em.create(Cart, {
-      isDeleted: false,
-      user: user,
-    });
-    const delivery = em.create(Delivery, {
-      type: 'Nova Post',
-      address: 'Poleva, 5',
-    });
-    const payment = em.create(Payment, {
-      type: 'paypal',
-      address: 'Poleva, 5',
-      creditCard: '5234 1535 1255 1239',
-    });
-  }
-}
+    const user = await new User({
+        username: 'Vasyl',
+    }).save();
+    console.log('User id: ', user.id);
+
+    const product = await new Product({
+        title: 'Harley',
+        description: 'Cool bike',
+        price: 10,
+    }).save();
+    console.log('Product id: ', product.id);
+
+    process.exit(1);
+})();
+

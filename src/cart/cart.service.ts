@@ -1,4 +1,4 @@
-import { deleteCartByUserId, getCartByUserId, updateUserCart, createOrderFromCart } from "./cart.repository";
+import { deleteCartByUserId, getCartByUserId, updateUserCart } from "./cart.repository";
 
 class cartService {
     async getUserCart(userID: string) {
@@ -16,7 +16,7 @@ class cartService {
     }
 
     async createOrderFromCart(userID: string) {
-        return createOrderFromCart(userID)
+        return this.createOrderFromCart(userID)
     }
     
 }
