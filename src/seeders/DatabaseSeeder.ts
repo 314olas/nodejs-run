@@ -1,12 +1,15 @@
 import Product from "../enteties/product.entity";
 import User from "../enteties/user.entity";
 import connectDB from "../mongo.config";
+import { UserRole } from "../types";
 
 export const init = (async () => {
     await connectDB();
 
     const user = await new User({
-        username: 'Vasyl',
+        email: 'vasyl@example.com',
+        password: 'qwerty123',
+        role: UserRole.ADMIN
     }).save();
     console.log('User id: ', user.id);
 

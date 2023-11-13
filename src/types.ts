@@ -34,3 +34,14 @@ export enum OrderStatus {
     CREATED = 'created',
     COMPLETED = 'completed'
 }
+
+export enum UserRole {
+    ADMIN = 'admin',
+    USER = 'user',
+}
+
+export type TUser = {
+    email: string,
+    password: string,
+    role: UserRole,
+};

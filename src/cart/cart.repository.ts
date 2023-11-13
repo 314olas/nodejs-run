@@ -5,8 +5,6 @@ import Product from "../enteties/product.entity";
 import User from "../enteties/user.entity";
 import { OrderStatus } from "../types";
 
-
-
 export const getCartByUserId = async (userId: string)  => {
     const user = await User.findById(userId);
     let result;

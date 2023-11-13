@@ -1,12 +1,23 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Request } from 'express';
+import * as jwt from 'jsonwebtoken';
 import fs from 'fs/promises'
 import { Cart, Product } from './types';
+import User from './enteties/user.entity';
 
-export const getUserIdFromHeaders = (req: Request): string | null => {
-    const userId = req.headers['x-user-id'] as string;
+export const getUserIdFromHeaders = (req: Request) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
-    if (userId) {
-        return userId;
+    if (token) {
+        try {
+            // @ts-ignore
+            const decoded = jwt.verify(token, process.env.SECRET_KEY);
+            const user = User.findById(decoded._id);
+            return user;
+        } catch (error) {
+            return null
+        }
     }
 
     return null;
